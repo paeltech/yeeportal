@@ -1,41 +1,52 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import heroYouth from "@/assets/hero-youth.jpg";
-import story1 from "@/assets/story-1.jpg";
-import story2 from "@/assets/story-2.jpg";
-import story3 from "@/assets/story-3.jpg";
+import { getHomePageData, getPublishedStories } from "@/lib/data/group-fns";
+import type { GroupRecord, HomePageData } from "@/lib/data/groups";
+import type { Story } from "@/lib/data/stories";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "YEE — Youth Economic Empowerment in Tanzania" },
-      {
-        name: "description",
-        content:
-          "Training, savings groups and mentorship for young Tanzanian entrepreneurs across 13 wards. Implemented by Mulika Tanzania with UNFPA support.",
-      },
-      { property: "og:title", content: "YEE — Youth-led enterprise across Tanzania" },
-      {
-        property: "og:description",
-        content: "126+ members. 24+ groups. 13 wards. Real livelihoods.",
-      },
-      { property: "og:image", content: heroYouth },
-      { name: "twitter:image", content: heroYouth },
-    ],
-  }),
+  loader: async () => {
+    const [home, stories] = await Promise.all([getHomePageData(), getPublishedStories()]);
+    return { home, stories };
+  },
+  head: ({ loaderData }) => {
+    const stats = loaderData?.home.stats;
+    const members = stats?.totalMembers ?? 0;
+    const groups = stats?.totalGroups ?? 0;
+    const wards = stats?.wardCount ?? 0;
+    return {
+      meta: [
+        { title: "YEE — Youth Economic Empowerment in Tanzania" },
+        {
+          name: "description",
+          content:
+            "Training, savings groups and mentorship for young Tanzanian entrepreneurs across Dar es Salaam wards. Implemented by Mulika Tanzania with UNFPA support.",
+        },
+        { property: "og:title", content: "YEE — Youth-led enterprise across Tanzania" },
+        {
+          property: "og:description",
+          content: `${members} members · ${groups} groups · ${wards} wards · Real livelihoods.`,
+        },
+        { property: "og:image", content: heroYouth },
+        { name: "twitter:image", content: heroYouth },
+      ],
+    };
+  },
   component: Home,
 });
 
 function Home() {
+  const { home, stories } = Route.useLoaderData();
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main>
-        <Hero />
+        <Hero stats={home.stats} />
         <PartnerStrip />
         <HowItWorks />
-        <ImpactBand />
-        <Stories />
-        <Groups />
+        <ImpactBand stats={home.stats} />
+        <Stories stories={stories} />
+        <Groups home={home} />
         <JoinCTA />
       </main>
       <Footer />
@@ -94,7 +105,7 @@ function Header() {
 
 /* ------------------------------ HERO ------------------------------ */
 
-function Hero() {
+function Hero({ stats }: { stats: HomePageData["stats"] }) {
   return (
     <section className="relative isolate overflow-hidden bg-ink text-cream">
       <img
@@ -145,9 +156,9 @@ function Hero() {
 
         {/* impact ticker pinned bottom of hero */}
         <div className="mt-20 grid grid-cols-3 max-w-2xl gap-x-10 gap-y-2 border-t border-cream/15 pt-8">
-          <Stat n="126+" label="Active members" />
-          <Stat n="24" label="Youth groups" />
-          <Stat n="13" label="Wards reached" />
+          <Stat n={stats.totalMembers.toLocaleString()} label="Active members" />
+          <Stat n={String(stats.totalGroups)} label="Youth groups" />
+          <Stat n={String(stats.wardCount)} label="Wards reached" />
         </div>
       </div>
     </section>
@@ -235,7 +246,7 @@ function HowItWorks() {
 
 /* --------------------------- IMPACT BAND --------------------------- */
 
-function ImpactBand() {
+function ImpactBand({ stats }: { stats: HomePageData["stats"] }) {
   return (
     <section className="bg-ink text-cream py-24 md:py-28">
       <div className="container-page grid gap-12 md:grid-cols-12 md:items-end">
@@ -248,10 +259,10 @@ function ImpactBand() {
           </h2>
         </div>
         <dl className="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-y-10 gap-x-6">
-          <ImpactStat n="126+" l="Active members" />
-          <ImpactStat n="24" l="Youth groups" />
-          <ImpactStat n="13" l="Wards" />
-          <ImpactStat n="2024" l="Cohort year" />
+          <ImpactStat n={stats.totalMembers.toLocaleString()} l="Active members" />
+          <ImpactStat n={String(stats.totalGroups)} l="Youth groups" />
+          <ImpactStat n={String(stats.wardCount)} l="Wards" />
+          <ImpactStat n={stats.cohortYear ? String(stats.cohortYear) : "—"} l="Cohort year" />
         </dl>
       </div>
     </section>
@@ -271,30 +282,9 @@ function ImpactStat({ n, l }: { n: string; l: string }) {
 
 /* ------------------------------ STORIES ------------------------------ */
 
-function Stories() {
-  const items = [
-    {
-      img: story1,
-      ward: "Kinondoni Ward",
-      title: "From market stall to registered shop.",
-      excerpt:
-        "Amina turned a kitenge side-hustle into a registered enterprise after her group's first savings cycle.",
-    },
-    {
-      img: story2,
-      ward: "Temeke Ward",
-      title: "A savings group that paid for itself in six months.",
-      excerpt:
-        "How twelve members pooled weekly contributions to fund three new businesses in a single year.",
-    },
-    {
-      img: story3,
-      ward: "Ilala Ward",
-      title: "Sparks, steel and a workshop of their own.",
-      excerpt:
-        "Mentorship and seed funding gave a welding cooperative its first commercial contract.",
-    },
-  ];
+function Stories({ stories }: { stories: Story[] }) {
+  if (stories.length === 0) return null;
+
   return (
     <section id="stories" className="bg-background py-24 md:py-32">
       <div className="container-page">
@@ -305,20 +295,14 @@ function Stories() {
               The work, in the words of the people doing it.
             </h2>
           </div>
-          <a
-            href="#"
-            className="text-sm font-semibold text-ink underline decoration-sun decoration-2 underline-offset-[6px] hover:decoration-clay"
-          >
-            All stories →
-          </a>
         </div>
 
         <div className="grid gap-10 md:grid-cols-3">
-          {items.map((s, i) => (
-            <article key={i} className="group flex flex-col">
+          {stories.map((s) => (
+            <article key={s.id} className="group flex flex-col">
               <div className="relative overflow-hidden rounded-xl aspect-[4/5] bg-muted">
                 <img
-                  src={s.img}
+                  src={s.imageUrl}
                   alt={s.title}
                   loading="lazy"
                   width={1024}
@@ -327,7 +311,7 @@ function Stories() {
                 />
               </div>
               <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">
-                {s.ward}
+                {s.wardLabel}
               </p>
               <h3 className="mt-3 font-display text-2xl leading-snug text-foreground">{s.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.excerpt}</p>
@@ -341,60 +325,8 @@ function Stories() {
 
 /* ------------------------------ GROUPS ------------------------------ */
 
-function Groups() {
-  const groups = [
-    {
-      name: "Tujikomboe",
-      ward: "Kinondoni",
-      focus: "Tailoring & kitenge",
-      members: 14,
-      savings: "TZS 4.2M",
-      readiness: 86,
-      tier: "A",
-      cycle: "Cycle 3",
-      repayment: "100%",
-    },
-    {
-      name: "Mshikamano",
-      ward: "Temeke",
-      focus: "Urban farming",
-      members: 12,
-      savings: "TZS 2.8M",
-      readiness: 72,
-      tier: "B",
-      cycle: "Cycle 2",
-      repayment: "97%",
-    },
-    {
-      name: "Nuru ya Vijana",
-      ward: "Ilala",
-      focus: "Metal fabrication",
-      members: 9,
-      savings: "TZS 3.6M",
-      readiness: 78,
-      tier: "B",
-      cycle: "Cycle 2",
-      repayment: "98%",
-    },
-    {
-      name: "Hekima",
-      ward: "Ubungo",
-      focus: "Mobile services",
-      members: 11,
-      savings: "TZS 1.4M",
-      readiness: 54,
-      tier: "C",
-      cycle: "Cycle 1",
-      repayment: "92%",
-    },
-  ];
-
-  const portfolio = {
-    totalSavings: "TZS 12.0M",
-    capitalDeployed: "TZS 8.4M",
-    avgRepayment: "97%",
-    loanReady: 18,
-  };
+function Groups({ home }: { home: HomePageData }) {
+  const { stats, portfolio, demographics, trainings, featuredGroups } = home;
 
   return (
     <section id="groups" className="bg-secondary py-24 md:py-32">
@@ -403,7 +335,7 @@ function Groups() {
           <div className="max-w-lg">
             <p className="eyebrow text-clay">Youth groups</p>
             <h2 className="mt-4 font-display text-4xl md:text-5xl tracking-tight leading-[1.05]">
-              24 groups. One growing network.
+              {stats.totalGroups} groups. One growing network.
             </h2>
           </div>
           <Link
@@ -429,9 +361,12 @@ function Groups() {
           </div>
           <dl className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-6 border-t border-border pt-8">
             <PortfolioStat n={portfolio.totalSavings} l="Total group savings" />
-            <PortfolioStat n={portfolio.capitalDeployed} l="Capital deployed" />
+            <PortfolioStat n={portfolio.capitalDeployed} l="Savings recorded" />
             <PortfolioStat n={portfolio.avgRepayment} l="Avg. repayment rate" />
-            <PortfolioStat n={`${portfolio.loanReady}/24`} l="Loan-ready groups" />
+            <PortfolioStat
+              n={`${portfolio.loanReady}/${portfolio.totalGroups}`}
+              l="Loan-ready groups"
+            />
           </dl>
         </div>
 
@@ -442,48 +377,22 @@ function Groups() {
             <div className="flex items-center justify-between">
               <p className="eyebrow text-clay">Member demographics</p>
               <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                n = 126
+                n = {demographics.totalMembers}
               </span>
             </div>
             <h3 className="mt-3 font-display text-2xl tracking-tight leading-tight">
               Who the network reaches.
             </h3>
 
-            <DemoBlock
-              title="Age"
-              rows={[
-                { l: "15–19", v: 22 },
-                { l: "20–24", v: 41 },
-                { l: "25–29", v: 27 },
-                { l: "30–35", v: 10 },
-              ]}
-            />
-            <DemoBlock
-              title="Sex"
-              rows={[
-                { l: "Young women", v: 58 },
-                { l: "Young men", v: 41 },
-                { l: "Prefer not to say", v: 1 },
-              ]}
-            />
-            <DemoBlock
-              title="Education"
-              rows={[
-                { l: "Primary", v: 18 },
-                { l: "Secondary", v: 49 },
-                { l: "VETA / TVET", v: 21 },
-                { l: "Tertiary", v: 12 },
-              ]}
-            />
-            <DemoBlock
-              title="Livelihood status at intake"
-              rows={[
-                { l: "Unemployed", v: 47 },
-                { l: "Casual / kibarua", v: 33 },
-                { l: "Self-employed", v: 16 },
-                { l: "In school", v: 4 },
-              ]}
-            />
+            {demographics.totalMembers > 0 ? (
+              <>
+                <DemoBlock title="Age" rows={demographics.age} />
+                <DemoBlock title="Sex" rows={demographics.sex} />
+                <DemoBlock title="Education" rows={demographics.education} />
+              </>
+            ) : (
+              <p className="mt-6 text-sm text-muted-foreground">No member records yet.</p>
+            )}
           </div>
 
           {/* Thematic trainings */}
@@ -491,7 +400,7 @@ function Groups() {
             <div className="flex items-center justify-between">
               <p className="eyebrow text-clay">Thematic trainings</p>
               <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                7 modules
+                {trainings.length} modules
               </span>
             </div>
             <h3 className="mt-3 font-display text-2xl tracking-tight leading-tight">
@@ -499,56 +408,22 @@ function Groups() {
             </h3>
 
             <ul className="mt-6 space-y-3">
-              {[
-                {
-                  t: "Financial literacy",
-                  d: "Budgeting, saving, recordkeeping and group lending basics.",
-                  c: 124,
-                },
-                {
-                  t: "Entrepreneurship & business planning",
-                  d: "Idea to plan, costing, pricing and market entry.",
-                  c: 118,
-                },
-                {
-                  t: "GBV prevention & response",
-                  d: "Recognising, preventing and safely reporting gender-based violence.",
-                  c: 126,
-                },
-                {
-                  t: "Sexual & reproductive health rights",
-                  d: "SRHR essentials delivered with UNFPA-aligned curriculum.",
-                  c: 121,
-                },
-                {
-                  t: "Digital & mobile-money skills",
-                  d: "Smartphone basics, M-Pesa / Tigo Pesa, online safety.",
-                  c: 102,
-                },
-                {
-                  t: "Life skills & leadership",
-                  d: "Communication, negotiation, group governance.",
-                  c: 115,
-                },
-                {
-                  t: "Market linkages & cooperatives",
-                  d: "Registering groups, accessing buyers and value chains.",
-                  c: 73,
-                },
-              ].map((m) => (
+              {trainings.map((m) => (
                 <li
-                  key={m.t}
+                  key={m.name}
                   className="flex items-start gap-4 border-t border-border pt-3 first:border-0 first:pt-0"
                 >
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-sun shrink-0" />
                   <div className="flex-1">
                     <div className="flex items-baseline justify-between gap-3">
-                      <h4 className="font-display text-base text-foreground">{m.t}</h4>
+                      <h4 className="font-display text-base text-foreground">{m.name}</h4>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        {m.c} trained
+                        {m.trained} trained
                       </span>
                     </div>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{m.d}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {m.description}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -556,66 +431,78 @@ function Groups() {
           </div>
         </div>
 
-        <div className="grid gap-px bg-border overflow-hidden rounded-2xl sm:grid-cols-2 lg:grid-cols-4">
-          {groups.map((g) => (
-            <a
-              key={g.name}
-              href="#"
-              className="bg-card p-7 flex flex-col gap-5 hover:bg-cream transition-colors"
-            >
-              <div className="flex items-start justify-between">
-                <h3 className="font-display text-2xl leading-tight">{g.name}</h3>
-                <span
-                  className="grid h-8 w-8 place-items-center rounded-full bg-ink text-cream font-display text-sm"
-                  title={`Credit tier ${g.tier}`}
-                >
-                  {g.tier}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Loan readiness
-                  </span>
-                  <span className="font-display text-lg text-foreground">{g.readiness}%</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
-                  <div className="h-full bg-sun" style={{ width: `${g.readiness}%` }} />
-                </div>
-              </div>
-
-              <div className="mt-auto space-y-1.5 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Ward</span>
-                  <span className="text-foreground font-medium">{g.ward}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Focus</span>
-                  <span className="text-foreground font-medium">{g.focus}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Members</span>
-                  <span className="text-foreground font-medium">{g.members}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Savings</span>
-                  <span className="text-foreground font-medium">{g.savings}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Repayment</span>
-                  <span className="text-foreground font-medium">{g.repayment}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Stage</span>
-                  <span className="text-foreground font-medium">{g.cycle}</span>
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
+        {featuredGroups.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">
+            No active groups yet.
+          </div>
+        ) : (
+          <div className="grid gap-px bg-border overflow-hidden rounded-2xl sm:grid-cols-2 lg:grid-cols-4">
+            {featuredGroups.map((g) => (
+              <GroupCard key={g.slug} group={g} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
+  );
+}
+
+function GroupCard({ group: g }: { group: GroupRecord }) {
+  return (
+    <Link
+      to="/groups/$groupId"
+      params={{ groupId: g.slug }}
+      className="bg-card p-7 flex flex-col gap-5 hover:bg-cream transition-colors focus:outline-none focus:ring-2 focus:ring-sun"
+    >
+      <div className="flex items-start justify-between">
+        <h3 className="font-display text-2xl leading-tight">{g.name}</h3>
+        <span
+          className="grid h-8 w-8 place-items-center rounded-full bg-ink text-cream font-display text-sm"
+          title={`Credit tier ${g.tier}`}
+        >
+          {g.tier}
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Loan readiness
+          </span>
+          <span className="font-display text-lg text-foreground">{g.readiness}%</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
+          <div className="h-full bg-sun" style={{ width: `${g.readiness}%` }} />
+        </div>
+      </div>
+
+      <div className="mt-auto space-y-1.5 text-sm">
+        <div className="flex justify-between text-muted-foreground">
+          <span>Ward</span>
+          <span className="text-foreground font-medium">{g.ward}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Focus</span>
+          <span className="text-foreground font-medium">{g.focus}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Members</span>
+          <span className="text-foreground font-medium">{g.members}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Savings</span>
+          <span className="text-foreground font-medium">{g.savings}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Repayment</span>
+          <span className="text-foreground font-medium">{g.repayment}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Stage</span>
+          <span className="text-foreground font-medium">{g.cycle}</span>
+        </div>
+      </div>
+    </Link>
   );
 }
 

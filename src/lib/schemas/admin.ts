@@ -62,6 +62,23 @@ export const lookupListSchema = z.object({
   includeInactive: z.boolean().optional().default(false),
 });
 
+export const storyUpsertSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().min(1, "Title is required"),
+  excerpt: z.string().min(1, "Excerpt is required"),
+  wardLabel: z.string().min(1, "Ward label is required"),
+  imageUrl: z.string().url("Image URL must be valid"),
+  storagePath: z.string().optional(),
+  sortOrder: z.coerce.number().int().nonnegative().default(0),
+  isPublished: z.boolean().default(true),
+});
+
+export const storyPhotoUploadSchema = z.object({
+  fileName: z.string().min(1),
+  mimeType: z.string().min(1),
+  base64: z.string().min(1),
+});
+
 export type GroupUpsertInput = z.infer<typeof groupUpsertSchema>;
 export type MemberUpsertInput = z.infer<typeof memberUpsertSchema>;
 export type LookupOptionInput = z.infer<typeof lookupOptionSchema>;

@@ -58,6 +58,7 @@ export function getNavItemsForRole(role: UserRole) {
     base.push(
       { to: "/dashboard/groups" as const, label: "Groups", exact: false },
       { to: "/dashboard/documents" as const, label: "Public documents", exact: false },
+      { to: "/dashboard/stories" as const, label: "Stories", exact: false },
       { to: "/dashboard/member-options" as const, label: "Member options", exact: false },
     );
   }

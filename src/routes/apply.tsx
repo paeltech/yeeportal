@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { submitInterestApplication } from "@/lib/forms/form-fns";
-import { GROUPS } from "@/lib/groups-data";
+import { getApplyFormOptions } from "@/lib/data/group-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/apply")({
+  loader: async () => getApplyFormOptions(),
   head: () => ({
     meta: [
       { title: "Apply to YEE — Youth Economic Empowerment" },
@@ -29,10 +30,8 @@ export const Route = createFileRoute("/apply")({
   component: ApplyPage,
 });
 
-const wards = [...new Set(GROUPS.map((g) => g.ward))].sort();
-const focusAreas = [...new Set(GROUPS.map((g) => g.focus))].sort();
-
 function ApplyPage() {
+  const { wards, focusAreas } = Route.useLoaderData();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({

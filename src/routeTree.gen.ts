@@ -17,6 +17,7 @@ import { Route as GroupsIndexRouteImport } from './routes/groups.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups.$groupId'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
+import { Route as DashboardStoriesRouteImport } from './routes/dashboard/stories'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
 import { Route as DashboardMyGroupRouteImport } from './routes/dashboard/my-group'
 import { Route as DashboardMemberOptionsRouteImport } from './routes/dashboard/member-options'
@@ -65,6 +66,11 @@ const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
 const DashboardUsersRoute = DashboardUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardStoriesRoute = DashboardStoriesRouteImport.update({
+  id: '/stories',
+  path: '/stories',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardProfileRoute = DashboardProfileRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/member-options': typeof DashboardMemberOptionsRoute
   '/dashboard/my-group': typeof DashboardMyGroupRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/stories': typeof DashboardStoriesRoute
   '/dashboard/users': typeof DashboardUsersRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/dashboard/member-options': typeof DashboardMemberOptionsRoute
   '/dashboard/my-group': typeof DashboardMyGroupRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/stories': typeof DashboardStoriesRoute
   '/dashboard/users': typeof DashboardUsersRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/dashboard/member-options': typeof DashboardMemberOptionsRoute
   '/dashboard/my-group': typeof DashboardMyGroupRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/stories': typeof DashboardStoriesRoute
   '/dashboard/users': typeof DashboardUsersRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/dashboard/member-options'
     | '/dashboard/my-group'
     | '/dashboard/profile'
+    | '/dashboard/stories'
     | '/dashboard/users'
     | '/groups/$groupId'
     | '/dashboard/'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/dashboard/member-options'
     | '/dashboard/my-group'
     | '/dashboard/profile'
+    | '/dashboard/stories'
     | '/dashboard/users'
     | '/groups/$groupId'
     | '/dashboard'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/dashboard/member-options'
     | '/dashboard/my-group'
     | '/dashboard/profile'
+    | '/dashboard/stories'
     | '/dashboard/users'
     | '/groups/$groupId'
     | '/dashboard/'
@@ -297,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardUsersRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/stories': {
+      id: '/dashboard/stories'
+      path: '/stories'
+      fullPath: '/dashboard/stories'
+      preLoaderRoute: typeof DashboardStoriesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/profile': {
       id: '/dashboard/profile'
       path: '/profile'
@@ -369,6 +388,7 @@ interface DashboardRouteChildren {
   DashboardMemberOptionsRoute: typeof DashboardMemberOptionsRoute
   DashboardMyGroupRoute: typeof DashboardMyGroupRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
+  DashboardStoriesRoute: typeof DashboardStoriesRoute
   DashboardUsersRoute: typeof DashboardUsersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardGroupsGroupIdRoute: typeof DashboardGroupsGroupIdRoute
@@ -382,6 +402,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardMemberOptionsRoute: DashboardMemberOptionsRoute,
   DashboardMyGroupRoute: DashboardMyGroupRoute,
   DashboardProfileRoute: DashboardProfileRoute,
+  DashboardStoriesRoute: DashboardStoriesRoute,
   DashboardUsersRoute: DashboardUsersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardGroupsGroupIdRoute: DashboardGroupsGroupIdRoute,

@@ -2,7 +2,6 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { GroupDocumentsSection } from "@/components/documents/group-documents-section";
 import { fetchGroupDetail } from "@/lib/data/groups";
 import { repoGetGroupDocuments } from "@/lib/documents/repository";
-import { GROUPS, slugify } from "@/lib/groups-data";
 
 export const Route = createFileRoute("/groups/$groupId")({
   loader: async ({ params }) => {
@@ -68,15 +67,14 @@ function GroupNotFound() {
 }
 
 function GroupDetailsPage() {
-  const { group, members, trainings, meta, documents } = Route.useLoaderData();
+  const { group, members, trainings, meta, documents, related } = Route.useLoaderData();
 
   const women = members.filter((m) => m.sex === "F").length;
   const men = members.length - women;
-  const avgAge = Math.round(members.reduce((s, m) => s + m.age, 0) / members.length);
-
-  const related = GROUPS.filter(
-    (g) => g.name !== group.name && (g.ward === group.ward || g.focus === group.focus),
-  ).slice(0, 3);
+  const avgAge =
+    members.length > 0
+      ? Math.round(members.reduce((s, m) => s + m.age, 0) / members.length)
+      : 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -247,9 +245,9 @@ function GroupDetailsPage() {
             <div className="grid gap-px bg-border rounded-2xl overflow-hidden sm:grid-cols-3">
               {related.map((g) => (
                 <Link
-                  key={g.name}
+                  key={g.slug}
                   to="/groups/$groupId"
-                  params={{ groupId: slugify(g.name) }}
+                  params={{ groupId: g.slug }}
                   className="bg-card p-6 hover:bg-cream/40 transition-colors"
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-clay">

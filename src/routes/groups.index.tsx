@@ -1,32 +1,33 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { getGroups } from "@/lib/data/group-fns";
-import { slugify } from "@/lib/groups-data";
 
 export const Route = createFileRoute("/groups/")({
   loader: async () => ({ groups: await getGroups() }),
-  head: () => ({
-    meta: [
-      { title: "Youth Groups — YEE Tanzania" },
-      {
-        name: "description",
-        content:
-          "Browse all 24 YEE youth groups across 13 wards. Filter by ward, focus, credit tier and savings cycle.",
-      },
-      { property: "og:title", content: "YEE Youth Groups Directory" },
-      {
-        property: "og:description",
-        content: "Filter and explore youth-led enterprise groups across Tanzania.",
-      },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const count = loaderData?.groups.length ?? 0;
+    return {
+      meta: [
+        { title: "Youth Groups — YEE Tanzania" },
+        {
+          name: "description",
+          content: `Browse ${count} YEE youth groups across Dar es Salaam. Filter by ward, focus, credit tier and savings cycle.`,
+        },
+        { property: "og:title", content: "YEE Youth Groups Directory" },
+        {
+          property: "og:description",
+          content: "Filter and explore youth-led enterprise groups across Tanzania.",
+        },
+      ],
+    };
+  },
   component: GroupsPage,
 });
 
 const uniq = <T,>(a: T[]) => Array.from(new Set(a)).sort();
 
 function GroupsPage() {
-  const { groups: GROUPS } = Route.useLoaderData();
+  const { groups } = Route.useLoaderData();
   const [q, setQ] = useState("");
   const [ward, setWard] = useState("All");
   const [focus, setFocus] = useState("All");
@@ -34,12 +35,12 @@ function GroupsPage() {
   const [cycle, setCycle] = useState("All");
   const [sort, setSort] = useState<"readiness" | "savings" | "name" | "members">("readiness");
 
-  const wards = useMemo(() => uniq(GROUPS.map((g) => g.ward)), []);
-  const focuses = useMemo(() => uniq(GROUPS.map((g) => g.focus)), []);
-  const cycles = useMemo(() => uniq(GROUPS.map((g) => g.cycle)), []);
+  const wards = useMemo(() => uniq(groups.map((g) => g.ward)), [groups]);
+  const focuses = useMemo(() => uniq(groups.map((g) => g.focus)), [groups]);
+  const cycles = useMemo(() => uniq(groups.map((g) => g.cycle)), [groups]);
 
   const filtered = useMemo(() => {
-    const list = GROUPS.filter((g) => {
+    const list = groups.filter((g) => {
       if (ward !== "All" && g.ward !== ward) return false;
       if (focus !== "All" && g.focus !== focus) return false;
       if (tier !== "All" && g.tier !== tier) return false;
@@ -54,7 +55,7 @@ function GroupsPage() {
       if (sort === "savings") return b.savingsNum - a.savingsNum;
       return b.readiness - a.readiness;
     });
-  }, [q, ward, focus, tier, cycle, sort]);
+  }, [groups, q, ward, focus, tier, cycle, sort]);
 
   const reset = () => {
     setQ("");
@@ -101,7 +102,7 @@ function GroupsPage() {
           </h1>
           <p className="mt-6 max-w-2xl text-cream/75 leading-relaxed">
             Filter by ward, enterprise focus, credit tier or savings cycle to explore the{" "}
-            {GROUPS.length} groups currently active in the YEE network.
+            {groups.length} groups currently active in the YEE network.
           </p>
         </div>
       </section>
@@ -152,7 +153,7 @@ function GroupsPage() {
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
               Showing <span className="font-semibold text-foreground">{filtered.length}</span> of{" "}
-              {GROUPS.length} groups
+              {groups.length} groups
             </div>
             <div className="flex items-center gap-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -196,9 +197,9 @@ function GroupsPage() {
             <div className="grid gap-px bg-border overflow-hidden rounded-2xl sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((g) => (
                 <Link
-                  key={g.name}
+                  key={g.slug}
                   to="/groups/$groupId"
-                  params={{ groupId: slugify(g.name) }}
+                  params={{ groupId: g.slug }}
                   className="bg-card p-7 flex flex-col gap-5 group hover:bg-cream/40 transition-colors focus:outline-none focus:ring-2 focus:ring-sun"
                 >
                   <div className="flex items-start justify-between">

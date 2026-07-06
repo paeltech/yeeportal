@@ -1,12 +1,7 @@
-import { seedGroupDocuments } from "./seed";
-import type { DocumentType, DownloadRequest, GroupDocument } from "./types";
+import type { GroupDocument } from "./types";
 
 const documents = new Map<string, GroupDocument>();
-const downloadRequests = new Map<string, DownloadRequest>();
-
-for (const doc of seedGroupDocuments()) {
-  documents.set(doc.id, doc);
-}
+const downloadRequests = new Map<string, import("./types").DownloadRequest>();
 
 export function getDocumentById(id: string): GroupDocument | undefined {
   return documents.get(id);
@@ -50,8 +45,8 @@ export function createDownloadRequest(
   email: string,
   token: string,
   expiresAt: string,
-): DownloadRequest {
-  const request: DownloadRequest = {
+): import("./types").DownloadRequest {
+  const request = {
     id: crypto.randomUUID(),
     documentId,
     email,
@@ -63,7 +58,9 @@ export function createDownloadRequest(
   return request;
 }
 
-export function getDownloadRequestByToken(token: string): DownloadRequest | undefined {
+export function getDownloadRequestByToken(
+  token: string,
+): import("./types").DownloadRequest | undefined {
   const request = downloadRequests.get(token);
   if (!request) return undefined;
   if (new Date(request.expiresAt) < new Date()) {
@@ -73,7 +70,7 @@ export function getDownloadRequestByToken(token: string): DownloadRequest | unde
   return request;
 }
 
-export function makeDocumentId(groupSlug: string | null, type: DocumentType): string {
+export function makeDocumentId(groupSlug: string | null, type: GroupDocument["type"]): string {
   const prefix = groupSlug ?? "site";
   if (type === "constitution") return `${prefix}-constitution`;
   if (type === "registration_certificate") return `${prefix}-registration`;

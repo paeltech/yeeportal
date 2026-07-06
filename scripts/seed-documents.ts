@@ -1,7 +1,6 @@
-import { GROUPS, slugify } from "@/lib/groups-data";
-import type { GroupDocument } from "./types";
+import type { GroupDocument } from "../src/lib/documents/types";
+import { GROUPS, slugify } from "./seed-groups-data";
 
-/** Sample PDF served from /public for preview and download demos */
 export const SAMPLE_PDF_URL = "/documents/sample-yee-document.pdf";
 
 export function seedGroupDocuments(): GroupDocument[] {

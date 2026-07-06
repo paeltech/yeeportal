@@ -3,8 +3,9 @@
  * Usage: npm run db:seed
  */
 import { createClient } from "@supabase/supabase-js";
-import { GROUPS, slugify, getGroupDetails } from "../src/lib/groups-data";
-import { seedGroupDocuments } from "../src/lib/documents/seed";
+import { GROUPS, slugify, getGroupDetails } from "./seed-groups-data";
+import { seedGroupDocuments } from "./seed-documents";
+import { seedStories } from "./seed-stories";
 import { requireSupabaseEnv } from "./load-env";
 
 const { url, serviceRoleKey: key } = requireSupabaseEnv();
@@ -199,6 +200,7 @@ async function main() {
   await seedMemberLookups();
   await seedGroups();
   await seedDocuments();
+  await seedStories();
   await seedMembersAndTrainings();
   console.log("\nDone.");
 }
