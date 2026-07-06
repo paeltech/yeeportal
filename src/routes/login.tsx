@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { signIn } from "@/lib/auth/auth-fns";
 import { getDefaultDashboardPath } from "@/lib/auth/permissions";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,25 +17,66 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const router = useRouter();
   const { redirect: redirectTo } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setCheckingSession(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const target = redirectTo ?? "/dashboard";
+        router.navigate({ to: target as "/dashboard" });
+      }
+      setCheckingSession(false);
+    });
+  }, [redirectTo, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      if (isSupabaseConfigured()) {
+        const supabase = createSupabaseBrowserClient();
+        if (!supabase) throw new Error("Auth unavailable");
+
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) throw error;
+
+        toast.success("Signed in successfully");
+        window.location.href = redirectTo ?? "/dashboard";
+        return;
+      }
+
+      const { signIn } = await import("@/lib/auth/auth-fns");
       const result = await signIn({ data: { email, password } });
       toast.success(`Welcome back, ${result.session.profile.fullName}`);
-      const target = redirectTo ?? getDefaultDashboardPath(result.session.profile.role);
-      window.location.href = target;
+      window.location.href = redirectTo ?? getDefaultDashboardPath(result.session.profile.role);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {
       setLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">

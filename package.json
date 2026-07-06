@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:push": "supabase db push",
+    "db:seed": "npx tsx scripts/seed-all.ts",
+    "env:sync": "python3 scripts/sync-env.py",
+    "admin:bootstrap": "npx tsx scripts/bootstrap-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import {
   FileText,
   LayoutDashboard,
@@ -7,13 +7,15 @@ import {
   FolderOpen,
   User,
   LogOut,
+  Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getAuthSession, signOut } from "@/lib/auth/auth-fns";
+import { getAuthSession } from "@/lib/auth/auth-fns";
 import { getNavItemsForRole } from "@/lib/auth/permissions";
 import type { AuthSession } from "@/lib/auth/types";
 import { ROLE_LABELS } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async ({ location }) => {
@@ -33,21 +35,22 @@ const iconMap = {
   Overview: LayoutDashboard,
   Applications: ClipboardList,
   Groups: FolderOpen,
-  Documents: FileText,
   "My group": Users,
   Users: Users,
   "My profile": User,
+  "Member options": Settings2,
+  "Public documents": FileText,
 } as const;
 
 function DashboardLayout() {
   const { session } = Route.useRouteContext();
-  const router = useRouter();
   const navItems = getNavItemsForRole(session.profile.role);
 
   const handleSignOut = async () => {
-    await signOut();
+    const supabase = createSupabaseBrowserClient();
+    if (supabase) await supabase.auth.signOut();
     toast.success("Signed out");
-    await router.navigate({ to: "/" });
+    window.location.href = "/";
   };
 
   return (

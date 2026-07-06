@@ -6,6 +6,8 @@ import {
   getDownloadRequestByToken,
   getGroupDocuments,
   listAllDocuments,
+  listGroupDocumentsAdmin,
+  listSiteDocuments,
   makeDocumentId,
   upsertDocument,
 } from "./store";
@@ -15,8 +17,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 function mapDbDocument(row: Record<string, unknown>): GroupDocument {
   return {
     id: row.id as string,
-    groupSlug: row.group_slug as string,
-    groupName: row.group_name as string,
+    groupSlug: (row.group_slug as string | null) ?? null,
+    groupName: (row.group_name as string | null) ?? null,
     type: row.type as GroupDocument["type"],
     title: row.title as string,
     fileName: row.file_name as string,
@@ -42,6 +44,36 @@ export async function repoGetGroupDocuments(groupSlug: string): Promise<GroupDoc
     }
   }
   return getGroupDocuments(groupSlug);
+}
+
+export async function repoListSiteDocuments(): Promise<GroupDocument[]> {
+  if (isSupabaseConfigured()) {
+    const admin = createSupabaseAdminClient();
+    if (admin) {
+      const { data, error } = await admin
+        .from("documents")
+        .select("*")
+        .is("group_slug", null)
+        .order("title");
+      if (!error && data) return data.map(mapDbDocument);
+    }
+  }
+  return listSiteDocuments();
+}
+
+export async function repoListGroupDocumentsAdmin(groupSlug: string): Promise<GroupDocument[]> {
+  if (isSupabaseConfigured()) {
+    const admin = createSupabaseAdminClient();
+    if (admin) {
+      const { data, error } = await admin
+        .from("documents")
+        .select("*")
+        .eq("group_slug", groupSlug)
+        .order("type");
+      if (!error && data) return data.map(mapDbDocument);
+    }
+  }
+  return listGroupDocumentsAdmin(groupSlug);
 }
 
 export async function repoListAllDocuments(): Promise<GroupDocument[]> {

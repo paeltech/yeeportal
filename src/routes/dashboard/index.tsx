@@ -60,8 +60,8 @@ function DashboardOverview() {
             <DashLink
               to="/dashboard/documents"
               icon={FileText}
-              title="Documents"
-              desc="Constitutions & certificates"
+              title="Public documents"
+              desc="Programme-wide resources"
             />
           </>
         )}

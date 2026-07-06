@@ -19,9 +19,12 @@ import { Route as GroupsGroupIdRouteImport } from './routes/groups.$groupId'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
 import { Route as DashboardMyGroupRouteImport } from './routes/dashboard/my-group'
+import { Route as DashboardMemberOptionsRouteImport } from './routes/dashboard/member-options'
 import { Route as DashboardDocumentsRouteImport } from './routes/dashboard/documents'
 import { Route as DashboardApplicationsRouteImport } from './routes/dashboard/applications'
 import { Route as DashboardGroupsIndexRouteImport } from './routes/dashboard/groups.index'
+import { Route as DashboardGroupsNewRouteImport } from './routes/dashboard/groups.new'
+import { Route as DashboardGroupsGroupIdRouteImport } from './routes/dashboard/groups.$groupId'
 import { Route as ApiDocumentsDownloadRouteImport } from './routes/api/documents/download'
 
 const LoginRoute = LoginRouteImport.update({
@@ -74,6 +77,11 @@ const DashboardMyGroupRoute = DashboardMyGroupRouteImport.update({
   path: '/my-group',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardMemberOptionsRoute = DashboardMemberOptionsRouteImport.update({
+  id: '/member-options',
+  path: '/member-options',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardDocumentsRoute = DashboardDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
@@ -89,6 +97,16 @@ const DashboardGroupsIndexRoute = DashboardGroupsIndexRouteImport.update({
   path: '/groups/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardGroupsNewRoute = DashboardGroupsNewRouteImport.update({
+  id: '/groups/new',
+  path: '/groups/new',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardGroupsGroupIdRoute = DashboardGroupsGroupIdRouteImport.update({
+  id: '/groups/$groupId',
+  path: '/groups/$groupId',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiDocumentsDownloadRoute = ApiDocumentsDownloadRouteImport.update({
   id: '/api/documents/download',
   path: '/api/documents/download',
@@ -102,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/documents': typeof DashboardDocumentsRoute
+  '/dashboard/member-options': typeof DashboardMemberOptionsRoute
   '/dashboard/my-group': typeof DashboardMyGroupRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/users': typeof DashboardUsersRoute
@@ -109,6 +128,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/api/documents/download': typeof ApiDocumentsDownloadRoute
+  '/dashboard/groups/$groupId': typeof DashboardGroupsGroupIdRoute
+  '/dashboard/groups/new': typeof DashboardGroupsNewRoute
   '/dashboard/groups/': typeof DashboardGroupsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +138,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/documents': typeof DashboardDocumentsRoute
+  '/dashboard/member-options': typeof DashboardMemberOptionsRoute
   '/dashboard/my-group': typeof DashboardMyGroupRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/users': typeof DashboardUsersRoute
@@ -124,6 +146,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/groups': typeof GroupsIndexRoute
   '/api/documents/download': typeof ApiDocumentsDownloadRoute
+  '/dashboard/groups/$groupId': typeof DashboardGroupsGroupIdRoute
+  '/dashboard/groups/new': typeof DashboardGroupsNewRoute
   '/dashboard/groups': typeof DashboardGroupsIndexRoute
 }
 export interface FileRoutesById {
@@ -134,6 +158,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/documents': typeof DashboardDocumentsRoute
+  '/dashboard/member-options': typeof DashboardMemberOptionsRoute
   '/dashboard/my-group': typeof DashboardMyGroupRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/users': typeof DashboardUsersRoute
@@ -141,6 +166,8 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/groups/': typeof GroupsIndexRoute
   '/api/documents/download': typeof ApiDocumentsDownloadRoute
+  '/dashboard/groups/$groupId': typeof DashboardGroupsGroupIdRoute
+  '/dashboard/groups/new': typeof DashboardGroupsNewRoute
   '/dashboard/groups/': typeof DashboardGroupsIndexRoute
 }
 export interface FileRouteTypes {
@@ -152,6 +179,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/applications'
     | '/dashboard/documents'
+    | '/dashboard/member-options'
     | '/dashboard/my-group'
     | '/dashboard/profile'
     | '/dashboard/users'
@@ -159,6 +187,8 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/groups/'
     | '/api/documents/download'
+    | '/dashboard/groups/$groupId'
+    | '/dashboard/groups/new'
     | '/dashboard/groups/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -167,6 +197,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/applications'
     | '/dashboard/documents'
+    | '/dashboard/member-options'
     | '/dashboard/my-group'
     | '/dashboard/profile'
     | '/dashboard/users'
@@ -174,6 +205,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/groups'
     | '/api/documents/download'
+    | '/dashboard/groups/$groupId'
+    | '/dashboard/groups/new'
     | '/dashboard/groups'
   id:
     | '__root__'
@@ -183,6 +216,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/applications'
     | '/dashboard/documents'
+    | '/dashboard/member-options'
     | '/dashboard/my-group'
     | '/dashboard/profile'
     | '/dashboard/users'
@@ -190,6 +224,8 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/groups/'
     | '/api/documents/download'
+    | '/dashboard/groups/$groupId'
+    | '/dashboard/groups/new'
     | '/dashboard/groups/'
   fileRoutesById: FileRoutesById
 }
@@ -275,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMyGroupRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/member-options': {
+      id: '/dashboard/member-options'
+      path: '/member-options'
+      fullPath: '/dashboard/member-options'
+      preLoaderRoute: typeof DashboardMemberOptionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/documents': {
       id: '/dashboard/documents'
       path: '/documents'
@@ -296,6 +339,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardGroupsIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/groups/new': {
+      id: '/dashboard/groups/new'
+      path: '/groups/new'
+      fullPath: '/dashboard/groups/new'
+      preLoaderRoute: typeof DashboardGroupsNewRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/groups/$groupId': {
+      id: '/dashboard/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/dashboard/groups/$groupId'
+      preLoaderRoute: typeof DashboardGroupsGroupIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/documents/download': {
       id: '/api/documents/download'
       path: '/api/documents/download'
@@ -309,20 +366,26 @@ declare module '@tanstack/react-router' {
 interface DashboardRouteChildren {
   DashboardApplicationsRoute: typeof DashboardApplicationsRoute
   DashboardDocumentsRoute: typeof DashboardDocumentsRoute
+  DashboardMemberOptionsRoute: typeof DashboardMemberOptionsRoute
   DashboardMyGroupRoute: typeof DashboardMyGroupRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardUsersRoute: typeof DashboardUsersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardGroupsGroupIdRoute: typeof DashboardGroupsGroupIdRoute
+  DashboardGroupsNewRoute: typeof DashboardGroupsNewRoute
   DashboardGroupsIndexRoute: typeof DashboardGroupsIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardApplicationsRoute: DashboardApplicationsRoute,
   DashboardDocumentsRoute: DashboardDocumentsRoute,
+  DashboardMemberOptionsRoute: DashboardMemberOptionsRoute,
   DashboardMyGroupRoute: DashboardMyGroupRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardUsersRoute: DashboardUsersRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardGroupsGroupIdRoute: DashboardGroupsGroupIdRoute,
+  DashboardGroupsNewRoute: DashboardGroupsNewRoute,
   DashboardGroupsIndexRoute: DashboardGroupsIndexRoute,
 }
 

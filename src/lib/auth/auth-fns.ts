@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import type { AuthSession, UserProfile } from "./types";
-import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const loginSchema = z.object({
@@ -36,6 +34,46 @@ function mapProfile(row: Record<string, unknown>): UserProfile {
   };
 }
 
+async function loadProfile(userId: string, email: string | undefined): Promise<AuthSession | null> {
+  const { createSupabaseAdminClient } = await import("@/lib/supabase/server");
+  const { createSupabaseServerClient } = await import("@/lib/supabase/server-cookies");
+
+  const admin = createSupabaseAdminClient();
+  const supabase = createSupabaseServerClient();
+
+  let profileRow: Record<string, unknown> | null = null;
+
+  if (admin) {
+    const { data } = await admin.from("profiles").select("*").eq("id", userId).maybeSingle();
+    profileRow = data;
+  } else if (supabase) {
+    const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    profileRow = data;
+  }
+
+  if (!profileRow && admin && email) {
+    const { data: created, error } = await admin
+      .from("profiles")
+      .insert({
+        id: userId,
+        email,
+        full_name: email.split("@")[0],
+        role: "member",
+      })
+      .select("*")
+      .single();
+    if (!error && created) profileRow = created;
+  }
+
+  if (!profileRow) return null;
+
+  return {
+    userId,
+    email: email ?? (profileRow.email as string),
+    profile: mapProfile(profileRow),
+  };
+}
+
 export const getAuthSession = createServerFn({ method: "GET" }).handler(
   async (): Promise<AuthSession | null> => {
     if (!isSupabaseConfigured()) {
@@ -43,27 +81,18 @@ export const getAuthSession = createServerFn({ method: "GET" }).handler(
       return null;
     }
 
-    const request = getRequest();
-    const client = createSupabaseServerClient(request);
-    if (!client) return null;
+    const { createSupabaseServerClient } = await import("@/lib/supabase/server-cookies");
+    const supabase = createSupabaseServerClient();
+    if (!supabase) return null;
 
     const {
       data: { user },
-    } = await client.supabase.auth.getUser();
-    if (!user) return null;
+      error,
+    } = await supabase.auth.getUser();
 
-    const admin = createSupabaseAdminClient();
-    const { data: profile } = admin
-      ? await admin.from("profiles").select("*").eq("id", user.id).single()
-      : await client.supabase.from("profiles").select("*").eq("id", user.id).single();
+    if (error || !user) return null;
 
-    if (!profile) return null;
-
-    return {
-      userId: user.id,
-      email: user.email ?? profile.email,
-      profile: mapProfile(profile),
-    };
+    return loadProfile(user.id, user.email);
   },
 );
 
@@ -79,40 +108,30 @@ export const signIn = createServerFn({ method: "POST" })
       );
     }
 
-    const request = getRequest();
-    const client = createSupabaseServerClient(request);
-    if (!client) throw new Error("Auth unavailable");
+    const { createSupabaseServerClient } = await import("@/lib/supabase/server-cookies");
+    const supabase = createSupabaseServerClient();
+    if (!supabase) throw new Error("Auth unavailable");
 
-    const { data: authData, error } = await client.supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
     if (error) throw new Error(error.message);
 
-    const admin = createSupabaseAdminClient();
-    const { data: profile } = admin
-      ? await admin.from("profiles").select("*").eq("id", authData.user.id).single()
-      : await client.supabase.from("profiles").select("*").eq("id", authData.user.id).single();
+    const session = await loadProfile(authData.user.id, authData.user.email ?? data.email);
+    if (!session) throw new Error("Profile not found");
 
-    if (!profile) throw new Error("Profile not found");
-
-    return {
-      session: {
-        userId: authData.user.id,
-        email: authData.user.email ?? data.email,
-        profile: mapProfile(profile),
-      } satisfies AuthSession,
-    };
+    return { session };
   });
 
 export const signOut = createServerFn({ method: "POST" }).handler(async () => {
   if (!isSupabaseConfigured()) return { success: true };
 
-  const request = getRequest();
-  const client = createSupabaseServerClient(request);
-  if (!client) return { success: true };
+  const { createSupabaseServerClient } = await import("@/lib/supabase/server-cookies");
+  const supabase = createSupabaseServerClient();
+  if (!supabase) return { success: true };
 
-  await client.supabase.auth.signOut();
+  await supabase.auth.signOut();
   return { success: true };
 });
 
@@ -121,7 +140,13 @@ export const updateUserRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.enum(["super_admin", "program_manager", "field_officer", "group_leader", "member"]),
+        role: z.enum([
+          "super_admin",
+          "program_manager",
+          "field_officer",
+          "group_leader",
+          "member",
+        ]),
         groupId: z.string().uuid().nullable().optional(),
         wardId: z.string().uuid().nullable().optional(),
       })
@@ -133,6 +158,7 @@ export const updateUserRole = createServerFn({ method: "POST" })
       throw new Error("Unauthorized");
     }
 
+    const { createSupabaseAdminClient } = await import("@/lib/supabase/server");
     const admin = createSupabaseAdminClient();
     if (!admin) throw new Error("Database unavailable");
 
@@ -155,6 +181,7 @@ export const fetchAllProfiles = createServerFn({ method: "GET" }).handler(async 
     throw new Error("Unauthorized");
   }
 
+  const { createSupabaseAdminClient } = await import("@/lib/supabase/server");
   const admin = createSupabaseAdminClient();
   if (!admin) return [];
 

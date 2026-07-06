@@ -19,7 +19,21 @@ export function getGroupDocuments(groupSlug: string): GroupDocument[] {
 }
 
 export function listAllDocuments(): GroupDocument[] {
-  return [...documents.values()].sort((a, b) => a.groupName.localeCompare(b.groupName));
+  return [...documents.values()].sort((a, b) =>
+    (a.groupName ?? "").localeCompare(b.groupName ?? ""),
+  );
+}
+
+export function listSiteDocuments(): GroupDocument[] {
+  return [...documents.values()]
+    .filter((d) => d.groupSlug == null)
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
+export function listGroupDocumentsAdmin(groupSlug: string): GroupDocument[] {
+  return [...documents.values()]
+    .filter((d) => d.groupSlug === groupSlug)
+    .sort((a, b) => a.type.localeCompare(b.type));
 }
 
 export function upsertDocument(doc: GroupDocument): GroupDocument {
@@ -59,8 +73,9 @@ export function getDownloadRequestByToken(token: string): DownloadRequest | unde
   return request;
 }
 
-export function makeDocumentId(groupSlug: string, type: DocumentType): string {
-  if (type === "constitution") return `${groupSlug}-constitution`;
-  if (type === "registration_certificate") return `${groupSlug}-registration`;
-  return `${groupSlug}-${type}-${Date.now()}`;
+export function makeDocumentId(groupSlug: string | null, type: DocumentType): string {
+  const prefix = groupSlug ?? "site";
+  if (type === "constitution") return `${prefix}-constitution`;
+  if (type === "registration_certificate") return `${prefix}-registration`;
+  return `${prefix}-${type}-${Date.now()}`;
 }

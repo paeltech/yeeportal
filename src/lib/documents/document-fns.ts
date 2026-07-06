@@ -11,7 +11,8 @@ import {
   repoGetDocumentById,
   repoGetDownloadRequestByToken,
   repoGetGroupDocuments,
-  repoListAllDocuments,
+  repoListGroupDocumentsAdmin,
+  repoListSiteDocuments,
   repoUpsertDocument,
 } from "@/lib/documents/repository";
 import { buildDownloadUrl, sendDocumentDownloadEmail } from "@/lib/email/send-document-link";
@@ -37,7 +38,7 @@ export const requestDocumentDownload = createServerFn({ method: "POST" })
     const emailResult = await sendDocumentDownloadEmail({
       to: data.email,
       documentTitle: document.title,
-      groupName: document.groupName,
+      groupName: document.groupName ?? "YEE Tanzania",
       downloadUrl,
     });
 
@@ -86,12 +87,36 @@ export const resolveDocumentDownload = createServerFn({ method: "GET" })
     };
   });
 
+export const fetchSiteDocuments = createServerFn({ method: "GET" }).handler(async () => {
+  const session = await getAuthSession();
+  if (!session || !canManageDocuments(session.profile.role)) {
+    throw new Error("Unauthorized");
+  }
+  return repoListSiteDocuments();
+});
+
+export const fetchGroupDocumentsAdmin = createServerFn({ method: "GET" })
+  .validator((data: unknown) => {
+    if (typeof data !== "object" || data === null || !("groupSlug" in data)) {
+      throw new Error("groupSlug is required");
+    }
+    return { groupSlug: String((data as { groupSlug: string }).groupSlug) };
+  })
+  .handler(async ({ data }) => {
+    const session = await getAuthSession();
+    if (!session || !canManageDocuments(session.profile.role)) {
+      throw new Error("Unauthorized");
+    }
+    return repoListGroupDocumentsAdmin(data.groupSlug);
+  });
+
+/** @deprecated Use fetchSiteDocuments or fetchGroupDocumentsAdmin */
 export const fetchAllDocuments = createServerFn({ method: "GET" }).handler(async () => {
   const session = await getAuthSession();
   if (!session || !canManageDocuments(session.profile.role)) {
     throw new Error("Unauthorized");
   }
-  return repoListAllDocuments();
+  return repoListSiteDocuments();
 });
 
 export const saveDocument = createServerFn({ method: "POST" })
@@ -102,12 +127,14 @@ export const saveDocument = createServerFn({ method: "POST" })
       throw new Error("Unauthorized");
     }
 
-    const id = data.id ?? makeDocumentId(data.groupSlug, data.type);
+    const groupSlug = data.groupSlug ?? null;
+    const groupName = data.groupName ?? null;
+    const id = data.id ?? makeDocumentId(groupSlug, data.type);
 
     const doc = await repoUpsertDocument({
       id,
-      groupSlug: data.groupSlug,
-      groupName: data.groupName,
+      groupSlug,
+      groupName,
       type: data.type,
       title: data.title,
       fileName: data.fileName,

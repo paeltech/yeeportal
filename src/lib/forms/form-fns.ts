@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAuthSession } from "@/lib/auth/auth-fns";
 import { isAdmin, isStaff } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log";
+import { assertActiveEducationLevel, assertActiveMemberRole } from "@/lib/admin/lookup-fns";
 import {
   interestApplicationSchema,
   memberRegistrationSchema,
@@ -112,6 +113,9 @@ export const submitMemberRegistration = createServerFn({ method: "POST" })
       const group = await fetchGroupBySlug(data.groupSlug);
       groupId = group?.id;
     }
+
+    await assertActiveMemberRole(data.memberRole);
+    await assertActiveEducationLevel(data.education);
 
     const admin = createSupabaseAdminClient();
     if (isSupabaseConfigured() && admin && groupId) {

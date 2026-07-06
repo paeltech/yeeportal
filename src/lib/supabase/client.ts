@@ -9,7 +9,13 @@ export function createSupabaseBrowserClient() {
   if (!url || !key) return null;
 
   if (!client) {
-    client = createBrowserClient(url, key);
+    client = createBrowserClient(url, key, {
+      cookieOptions: {
+        path: "/",
+        sameSite: "lax",
+        secure: typeof window !== "undefined" && window.location.protocol === "https:",
+      },
+    });
   }
   return client;
 }
